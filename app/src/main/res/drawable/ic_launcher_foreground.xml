@@ -1,0 +1,53 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Glowing Background Pulse (Behind the Hammer) -->
+    <path
+        android:fillColor="#1500E5FF"
+        android:pathData="M54,54m-36,0a36,36 0,1 1,72 0a36,36 0,1 1,-72 0" />
+
+    <!-- Soundwave rings surrounding the head -->
+    <path
+        android:strokeColor="#4000E5FF"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"
+        android:pathData="M 32 26 A 32 32 0 0 1 76 26" />
+
+    <!-- Stylized Equalizer Hammer Head (Horizontal sound controller) -->
+    <!-- Gradient block that looks premium and high tech -->
+    <path
+        android:fillColor="#FF00E5FF"
+        android:pathData="M28,32h52a4,4 0,0 1,4 4v12a4,4 0,0 1,-4 4h-52a4,4 0,0 1,-4 -4v-12a4,4 0,0 1,4 -4z" />
+
+    <!-- Equalizer Detail Lines on the Hammer Head (Looks like dynamic LED sliders) -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M36,36h4v4h-4z M46,40h4v4h-4z M56,36h4v4h-4z M66,42h4v4h-4z M76,38h4v4h-4z" />
+
+    <!-- Hammer Handle (Sleek slider track extending downwards) -->
+    <path
+        android:fillColor="#6000E5FF"
+        android:pathData="M52,52h4v34h-4z" />
+
+    <!-- Glowing slider thumb (The hammer handle grip) -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M54,72m-6,0a6,6 0,1 1,12 0a6,6 0,1 1,-12 0" />
+
+    <!-- Outer soundwaves (Left and Right) representing active EQ output -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:pathData="M 20 44 A 28 28 0 0 0 20 64" />
+
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:pathData="M 88 44 A 28 28 0 0 1 88 64" />
+
+</vector>

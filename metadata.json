@@ -1,0 +1,6 @@
+{
+  "name": "Hammer EQ",
+  "description": "Sleek and intuitive audio equalizer for your Hammer Earbuds with dual light/dark theme modes, custom sound presets, and advanced audio mode controls.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
