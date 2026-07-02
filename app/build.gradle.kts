@@ -129,3 +129,24 @@ dependencies {
   "ksp"(libs.moshi.kotlin.codegen)
 }
 
+val buildApkFile = file(layout.buildDirectory.file("outputs/apk/debug/app-debug.apk"))
+val destApkFile = file("${rootDir}/hammer-eq.apk")
+
+tasks.register("copyApkToRoot") {
+    val inputApk = buildApkFile
+    val outputApk = destApkFile
+    doLast {
+        if (inputApk.exists()) {
+            inputApk.copyTo(outputApk, overwrite = true)
+            println("Successfully copied APK to root as hammer-eq.apk")
+        } else {
+            println("APK not found at ${inputApk.absolutePath}")
+        }
+    }
+}
+
+afterEvaluate {
+    tasks.findByName("assembleDebug")?.finalizedBy("copyApkToRoot")
+}
+
+
