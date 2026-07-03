@@ -1,21 +1,23 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
+<html lang="en" class="scroll-smooth dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hammer EQ | Premium Audio Equalizer</title>
+    <title>Hammer EQ | Interactive Sound Tuning Console</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <script>
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
                         brand: {
                             50: '#f5f3ff',
                             100: '#ede9fe',
+                            400: '#a78bfa',
                             500: '#8b5cf6',
                             600: '#7c3aed',
                             700: '#6d28d9',
@@ -30,277 +32,1365 @@
         body {
             font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
         }
+        /* Custom horizontal & vertical slider styling to look like professional physical mixing boards */
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            background: transparent;
+            cursor: pointer;
+        }
+        input[type="range"]:focus {
+            outline: none;
+        }
+        /* Track */
+        input[type="range"]::-webkit-slider-runnable-track {
+            background: #1e293b;
+            border-radius: 9999px;
+            height: 6px;
+        }
+        .dark input[type="range"]::-webkit-slider-runnable-track {
+            background: #334155;
+        }
+        /* Thumb */
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            margin-top: -6px; /* Centers thumb on the 6px track */
+            background-color: #7c3aed;
+            height: 18px;
+            width: 18px;
+            border-radius: 9999px;
+            border: 2px solid #ffffff;
+            transition: transform 0.1s ease, background-color 0.1s ease;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+            background-color: #8b5cf6;
+        }
+        /* Vertical Slider track adjustments */
+        .vertical-slider-container input[type="range"] {
+            transform: rotate(-90deg);
+            transform-origin: center;
+        }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen selection:bg-brand-500/30 selection:text-brand-200">
+<body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 min-h-screen transition-colors duration-300 selection:bg-brand-500/30 selection:text-brand-800 dark:selection:text-brand-200">
 
-    <!-- Header / Navbar -->
-    <header class="border-b border-slate-900/80 bg-slate-950/80 backdrop-blur sticky top-0 z-50">
+    <!-- Top Navigation Header -->
+    <header class="border-b border-slate-200/80 dark:border-slate-900 bg-white/80 dark:bg-slate-950/80 backdrop-blur sticky top-0 z-50">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-            <div class="flex items-center gap-2.5">
-                <div class="p-2 bg-brand-600/10 border border-brand-500/20 rounded-xl text-brand-500">
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-brand-600/10 border border-brand-500/20 rounded-xl text-brand-600 dark:text-brand-400">
                     <i data-lucide="sliders" class="w-5 h-5"></i>
                 </div>
-                <span class="text-xl font-black tracking-tight text-white">Hammer <span class="text-brand-500">EQ</span></span>
+                <div>
+                    <span class="text-lg font-black tracking-tight text-slate-900 dark:text-white">Hammer <span class="text-brand-600 dark:text-brand-400">EQ</span></span>
+                    <span class="ml-2 px-1.5 py-0.5 bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300 rounded text-[10px] font-bold uppercase tracking-wider">Web Companion</span>
+                </div>
             </div>
             
-            <nav class="hidden md:flex items-center gap-8 text-sm font-medium text-slate-400">
-                <a href="#features" class="hover:text-white transition-colors">Features</a>
-                <a href="#how-to-install" class="hover:text-white transition-colors">Installation Guide</a>
-                <a href="#compatibility" class="hover:text-white transition-colors">Compatibility</a>
+            <!-- Tab Controls -->
+            <nav class="flex items-center gap-1 sm:gap-2">
+                <button onclick="switchTab('eq')" id="btn-tab-eq" class="px-4 py-2 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 bg-brand-600 text-white shadow-lg shadow-brand-600/10 dark:shadow-brand-600/20">
+                    <i data-lucide="equalizer" class="hidden sm:inline w-4 h-4"></i> Tuning Console
+                </button>
+                <button onclick="switchTab('guide')" id="btn-tab-guide" class="px-4 py-2 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
+                    <i data-lucide="info" class="hidden sm:inline w-4 h-4"></i> User Guide
+                </button>
             </nav>
 
-            <div>
-                <a href="./hammer-eq.apk" download class="bg-brand-600 hover:bg-brand-500 text-white transition-all px-5 py-2.5 rounded-full text-sm font-semibold shadow-lg shadow-brand-600/20 hover:shadow-brand-600/35 flex items-center gap-2">
-                    <i data-lucide="download" class="w-4 h-4"></i> Download APK
-                </a>
+            <div class="flex items-center gap-2">
+                <!-- Theme Mode Toggle -->
+                <button onclick="toggleTheme()" class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="Toggle Theme">
+                    <i id="theme-icon" data-lucide="sun" class="w-5 h-5"></i>
+                </button>
             </div>
         </div>
     </header>
 
-    <!-- Hero Section -->
-    <section class="relative pt-12 pb-20 md:py-32 overflow-hidden">
-        <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-brand-900/20 via-slate-950 to-slate-950 -z-10"></div>
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
-                <!-- Left Content -->
-                <div class="lg:col-span-7 space-y-6 text-center lg:text-left">
-                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-brand-500/30 bg-brand-500/10 text-brand-400 text-xs font-semibold uppercase tracking-wider">
-                        <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Custom Engineered
-                    </div>
-                    
-                    <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-none">
-                        Unleash the Power of <span class="bg-gradient-to-r from-brand-400 to-indigo-400 bg-clip-text text-transparent">Your Sound</span>
-                    </h1>
-                    
-                    <p class="text-lg text-slate-400 max-w-xl mx-auto lg:mx-0 leading-relaxed">
-                        Take absolute control of your audio experience. Hammer EQ is a premium, offline-first companion app designed to bring deep DSP-level soundscapes directly to your phone and earbuds.
-                    </p>
+    <!-- Main Content Grid -->
+    <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        
+        <!-- EQUALIZER TAB CONTENT -->
+        <div id="tab-eq-content" class="space-y-6">
 
-                    <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start items-center pt-2">
-                        <a href="./hammer-eq.apk" download class="w-full sm:w-auto bg-brand-600 hover:bg-brand-500 text-white transition-all text-center px-8 py-4 rounded-2xl font-bold shadow-xl shadow-brand-600/20 hover:shadow-brand-600/35 flex items-center justify-center gap-3 text-base">
-                            <i data-lucide="download" class="w-5 h-5"></i> Download APK Now
-                        </a>
-                        <a href="#how-to-install" class="w-full sm:w-auto border border-slate-800 hover:border-slate-700 transition-all bg-slate-900/40 text-center px-8 py-4 rounded-2xl font-bold flex items-center justify-center gap-3 text-base text-slate-300 hover:text-white">
-                            <i data-lucide="help-circle" class="w-5 h-5"></i> How to Install
-                        </a>
+            <!-- App Warning Status Header / Connection Alert -->
+            <div id="connection-alert" class="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-2xl bg-brand-50 dark:bg-brand-950/40 border border-brand-100 dark:border-brand-900/30 text-brand-800 dark:text-brand-300">
+                <div class="flex items-center gap-3 text-center sm:text-left">
+                    <div class="p-2 bg-brand-500/10 rounded-xl text-brand-600 dark:text-brand-400">
+                        <i data-lucide="music" class="w-5 h-5 animate-pulse"></i>
+                    </div>
+                    <div>
+                        <p class="font-bold text-sm">Real-time Web Equalizer Connected</p>
+                        <p class="text-xs text-brand-600 dark:text-brand-400/80">Play the built-in ambient synth soundscape or upload an MP3 to hear your custom EQ filters live!</p>
+                    </div>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="toggleSynthLoop()" id="btn-synth" class="px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-xs font-bold shadow-md shadow-brand-600/20 flex items-center gap-1.5 transition-all">
+                        <i data-lucide="play" class="w-3.5 h-3.5" id="synth-play-icon"></i> <span id="synth-text">Play Synth Loop</span>
+                    </button>
+                    <label class="px-4 py-2 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer">
+                        <i data-lucide="upload" class="w-3.5 h-3.5"></i> Custom MP3
+                        <input type="file" id="mp3-uploader" accept="audio/*" class="hidden" onchange="handleAudioUpload(event)">
+                    </label>
+                </div>
+            </div>
+
+            <!-- Row: Device Status & Response Curve -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                
+                <!-- Connection & Device Status Card (3 Columns) -->
+                <div class="lg:col-span-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 rounded-3xl p-6 shadow-sm flex flex-col justify-between">
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <!-- Model Selector Dropdown -->
+                            <div class="relative inline-block text-left">
+                                <button onclick="toggleModelDropdown()" class="inline-flex items-center gap-2 px-3.5 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-bold transition-colors">
+                                    <i data-lucide="headphones" class="w-4 h-4 text-brand-500"></i>
+                                    <span id="active-model">Hammer Pro</span>
+                                    <i data-lucide="chevron-down" class="w-3 h-3"></i>
+                                </button>
+                                <div id="model-dropdown" class="hidden absolute left-0 mt-2 w-48 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl z-30">
+                                    <div class="py-1">
+                                        <button onclick="selectModel('Hammer Buds')" class="w-full text-left px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">Hammer Buds</button>
+                                        <button onclick="selectModel('Hammer Pro')" class="w-full text-left px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">Hammer Pro</button>
+                                        <button onclick="selectModel('Hammer Elite')" class="w-full text-left px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">Hammer Elite</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Connection Pill Button -->
+                            <button onclick="toggleConnection()" id="connection-pill" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold transition-all">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" id="connection-indicator"></span>
+                                <span id="connection-text">Connected</span>
+                            </button>
+                        </div>
+
+                        <hr class="border-slate-100 dark:border-slate-800" />
+
+                        <!-- Active Hardware Battery status -->
+                        <div id="battery-stats" class="grid grid-cols-3 gap-2 py-2">
+                            <div class="text-center p-3 rounded-2xl bg-slate-50 dark:bg-slate-950/50 border border-slate-100 dark:border-slate-800/60">
+                                <i data-lucide="headphones" class="w-5 h-5 mx-auto text-slate-400 mb-1"></i>
+                                <p class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Left L</p>
+                                <p class="text-base font-black text-slate-800 dark:text-slate-100 mt-0.5" id="battery-left">85%</p>
+                                <div class="w-full bg-slate-200 dark:bg-slate-800 h-1 rounded-full mt-2 overflow-hidden">
+                                    <div class="bg-brand-500 h-full rounded-full" style="width: 85%" id="bar-battery-left"></div>
+                                </div>
+                            </div>
+                            <div class="text-center p-3 rounded-2xl bg-slate-50 dark:bg-slate-950/50 border border-slate-100 dark:border-slate-800/60">
+                                <i data-lucide="headphones" class="w-5 h-5 mx-auto text-slate-400 mb-1"></i>
+                                <p class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Right R</p>
+                                <p class="text-base font-black text-slate-800 dark:text-slate-100 mt-0.5" id="battery-right">85%</p>
+                                <div class="w-full bg-slate-200 dark:bg-slate-800 h-1 rounded-full mt-2 overflow-hidden">
+                                    <div class="bg-brand-500 h-full rounded-full" style="width: 85%" id="bar-battery-right"></div>
+                                </div>
+                            </div>
+                            <div class="text-center p-3 rounded-2xl bg-slate-50 dark:bg-slate-950/50 border border-slate-100 dark:border-slate-800/60">
+                                <i data-lucide="battery-charging" class="w-5 h-5 mx-auto text-slate-400 mb-1"></i>
+                                <p class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Case</p>
+                                <p class="text-base font-black text-slate-800 dark:text-slate-100 mt-0.5" id="battery-case">100%</p>
+                                <div class="w-full bg-slate-200 dark:bg-slate-800 h-1 rounded-full mt-2 overflow-hidden">
+                                    <div class="bg-emerald-500 h-full rounded-full" style="width: 100%" id="bar-battery-case"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Disconnected State Visual -->
+                        <div id="disconnected-visual" class="hidden py-6 text-center space-y-2">
+                            <div class="w-12 h-12 rounded-full bg-rose-500/10 border border-rose-500/20 flex items-center justify-center mx-auto text-rose-500">
+                                <i data-lucide="wifi-off" class="w-6 h-6"></i>
+                            </div>
+                            <p class="text-xs font-semibold text-rose-500">Hammer Earbuds Offline</p>
+                            <p class="text-[11px] text-slate-500">Tap the Connection Pill in the top-right to simulate reconnection.</p>
+                        </div>
                     </div>
 
-                    <div class="flex items-center justify-center lg:justify-start gap-6 pt-4 text-xs text-slate-500 font-medium">
-                        <span class="flex items-center gap-1.5"><i data-lucide="shield" class="w-4 h-4 text-emerald-500"></i> No Ads / Tracking</span>
-                        <span class="flex items-center gap-1.5"><i data-lucide="wifi-off" class="w-4 h-4 text-brand-500"></i> 100% Offline-First</span>
+                    <div class="pt-4 border-t border-slate-100 dark:border-slate-800/80">
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                            <strong>Note:</strong> Connects to your earbuds via a secure hardware handshake to load custom profiles directly into their embedded high-fidelity DSP memory.
+                        </p>
                     </div>
                 </div>
 
-                <!-- Right Visual -->
-                <div class="lg:col-span-5 flex justify-center">
-                    <div class="relative w-72 h-[500px] bg-slate-900 rounded-[40px] border-8 border-slate-800 shadow-2xl overflow-hidden p-6">
-                        <!-- Phone Notch -->
-                        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-slate-800 rounded-b-2xl z-20"></div>
+                <!-- Frequency Response Curve visualizer (8 Columns) -->
+                <div class="lg:col-span-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 rounded-3xl p-6 shadow-sm relative overflow-hidden flex flex-col justify-between">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                            <i data-lucide="activity" class="w-4 h-4 text-brand-500"></i> Frequency Response Tuning Curve
+                        </h3>
+                        <div class="flex items-center gap-1.5 text-[10px] text-slate-400 bg-slate-100 dark:bg-slate-800/50 px-2.5 py-1 rounded-lg">
+                            <span class="w-2 h-2 rounded-full bg-brand-500"></span> Active Target EQ Curve
+                        </div>
+                    </div>
+
+                    <!-- Canvas -->
+                    <div class="relative w-full h-44 bg-slate-950 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-850/80">
+                        <!-- Grid Lines Background -->
+                        <div class="absolute inset-0 grid grid-cols-5 pointer-events-none opacity-20">
+                            <div class="border-r border-slate-700 h-full"></div>
+                            <div class="border-r border-slate-700 h-full"></div>
+                            <div class="border-r border-slate-700 h-full"></div>
+                            <div class="border-r border-slate-700 h-full"></div>
+                            <div class="h-full"></div>
+                        </div>
+                        <div class="absolute inset-x-0 top-1/2 -translate-y-1/2 border-t border-dashed border-slate-700 pointer-events-none opacity-30"></div>
                         
-                        <!-- Mini App Preview Content -->
-                        <div class="h-full flex flex-col justify-between py-4 relative z-10 text-xs">
-                            <div class="space-y-4 pt-4">
-                                <div class="flex items-center justify-between border-b border-slate-800 pb-2">
-                                    <span class="font-extrabold text-white">HAMMER EQ</span>
-                                    <span class="px-2 py-0.5 bg-brand-500/20 text-brand-400 rounded-md text-[10px]">CONNECTED</span>
-                                </div>
-                                
-                                <!-- Preset Selection -->
-                                <div class="space-y-2">
-                                    <span class="text-slate-400 text-[10px] font-semibold uppercase tracking-wider block">Active Sound Preset</span>
-                                    <div class="grid grid-cols-2 gap-2">
-                                        <div class="p-2 border border-brand-500 bg-brand-500/10 rounded-xl text-center font-bold text-white">Classic Bass</div>
-                                        <div class="p-2 border border-slate-800 bg-slate-950/40 rounded-xl text-slate-400 text-center">Acoustic</div>
-                                    </div>
-                                </div>
-
-                                <!-- Equalizer Visualizer -->
-                                <div class="space-y-2 pt-2">
-                                    <span class="text-slate-400 text-[10px] font-semibold uppercase tracking-wider block">5-Band Audio Tuning</span>
-                                    <div class="flex justify-between items-end h-28 bg-slate-950/60 p-3 rounded-2xl border border-slate-800/60">
-                                        <div class="w-4 bg-brand-500 rounded-t-lg" style="height: 75%"></div>
-                                        <div class="w-4 bg-indigo-500 rounded-t-lg" style="height: 45%"></div>
-                                        <div class="w-4 bg-brand-600 rounded-t-lg" style="height: 90%"></div>
-                                        <div class="w-4 bg-indigo-600 rounded-t-lg" style="height: 60%"></div>
-                                        <div class="w-4 bg-brand-400 rounded-t-lg" style="height: 80%"></div>
-                                    </div>
-                                    <div class="flex justify-between text-[8px] text-slate-500 px-1 font-semibold">
-                                        <span>60Hz</span>
-                                        <span>230Hz</span>
-                                        <span>910Hz</span>
-                                        <span>4kHz</span>
-                                        <span>14kHz</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Bottom Navigation Simulation -->
-                            <div class="flex justify-around items-center border-t border-slate-800 pt-3 text-slate-500">
-                                <span class="text-brand-500 flex flex-col items-center gap-0.5"><i data-lucide="sliders" class="w-4 h-4"></i>Tuning</span>
-                                <span class="flex flex-col items-center gap-0.5"><i data-lucide="bookmark" class="w-4 h-4"></i>Presets</span>
-                                <span class="flex flex-col items-center gap-0.5"><i data-lucide="settings" class="w-4 h-4"></i>Device</span>
-                            </div>
-                        </div>
+                        <!-- Visualizer Audio Bars overlay (only visible when audio is playing) -->
+                        <canvas id="visualizer-canvas" class="absolute inset-0 w-full h-full pointer-events-none opacity-25"></canvas>
                         
-                        <!-- Visual Ambient Glow Behind Phone -->
-                        <div class="absolute -inset-10 bg-brand-500/10 filter blur-2xl -z-10"></div>
+                        <!-- EQ Curve Canvas -->
+                        <canvas id="curve-canvas" class="absolute inset-0 w-full h-full z-10"></canvas>
+                    </div>
+
+                    <!-- Bottom Scale Labels -->
+                    <div class="flex justify-between px-6 text-[10px] font-bold text-slate-500 dark:text-slate-400 pt-3">
+                        <span>60Hz <span class="font-normal opacity-60">(Sub-bass)</span></span>
+                        <span>230Hz <span class="font-normal opacity-60">(Low-mid)</span></span>
+                        <span>910Hz <span class="font-normal opacity-60">(Midrange)</span></span>
+                        <span>4kHz <span class="font-normal opacity-60">(Presence)</span></span>
+                        <span>14kHz <span class="font-normal opacity-60">(Sparkle)</span></span>
                     </div>
                 </div>
-            </div>
-        </div>
-    </section>
 
-    <!-- Step by Step Installation Guide -->
-    <section id="how-to-install" class="py-20 border-t border-slate-900 bg-slate-950">
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center space-y-4 mb-16">
-                <h2 class="text-3xl font-black tracking-tight text-white sm:text-4xl">Step-by-Step Installation</h2>
-                <p class="text-slate-400 max-w-xl mx-auto">
-                    Since Hammer EQ is distributed directly to deliver raw, uncensored hardware soundscapes, follow these quick steps to install it on your device.
-                </p>
             </div>
 
-            <div class="relative">
-                <!-- Timeline Line -->
-                <div class="absolute left-8 top-4 bottom-4 w-0.5 bg-slate-800 hidden sm:block"></div>
+            <!-- Equalizer Preset Profiles Bar -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 rounded-3xl p-6 shadow-sm">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                    <div class="space-y-1">
+                        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest">Acoustic Sound Profiles</h3>
+                        <p class="text-xs text-slate-500">Tap to instantly load hardware optimized profiles or save your current sliders</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="openSavePresetDialog()" id="btn-save-preset" class="px-3.5 py-1.5 border border-slate-200 dark:border-slate-800 hover:border-brand-500 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 text-xs font-semibold rounded-xl transition-all flex items-center gap-1.5">
+                            <i data-lucide="save" class="w-3.5 h-3.5 text-brand-500"></i> Save Custom Preset
+                        </button>
+                        <button onclick="resetSlidersToFlat()" class="px-3.5 py-1.5 border border-slate-200 dark:border-slate-800 hover:border-rose-500 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 text-xs font-semibold rounded-xl transition-all flex items-center gap-1.5">
+                            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 text-rose-500"></i> Reset Flat
+                        </button>
+                    </div>
+                </div>
 
-                <div class="space-y-12">
-                    <!-- Step 1 -->
-                    <div class="relative flex flex-col sm:flex-row gap-6 sm:gap-12">
-                        <div class="flex items-center justify-center w-16 h-16 rounded-2xl bg-brand-600/10 border border-brand-500/20 text-brand-400 font-extrabold text-xl shrink-0 z-10 bg-slate-950">
-                            1
+                <!-- Chips container -->
+                <div class="flex flex-wrap gap-2.5" id="presets-chips-container">
+                    <!-- Loaded dynamically via JS -->
+                </div>
+            </div>
+
+            <!-- Equalizer Hardware Slider Console Card -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 rounded-3xl p-6 shadow-sm">
+                <div class="mb-6">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest">5-Band Equalizer Tuning Console</h3>
+                    <p class="text-xs text-slate-500">Drag sliders to modify frequencies. Double tap a slider to reset it to 0 dB.</p>
+                </div>
+
+                <!-- Slider Rack -->
+                <div class="grid grid-cols-5 gap-3 h-80 sm:h-96">
+                    
+                    <!-- 60Hz -->
+                    <div class="flex flex-col items-center justify-between h-full bg-slate-50 dark:bg-slate-950/40 rounded-2xl p-2 sm:p-4 border border-slate-100 dark:border-slate-900/60">
+                        <span class="text-xs font-extrabold text-slate-800 dark:text-slate-100 bg-slate-200/50 dark:bg-slate-800 px-2 py-0.5 rounded" id="label-val-0">0dB</span>
+                        <div class="vertical-slider-container relative w-8 h-48 sm:h-64 flex items-center justify-center">
+                            <input type="range" min="-12" max="12" step="1" value="0" id="slider-0" class="w-48 sm:w-64" oninput="updateBand(0, this.value)" ondblclick="resetBand(0)">
                         </div>
+                        <div class="text-center space-y-0.5">
+                            <p class="text-xs font-extrabold text-brand-600 dark:text-brand-400">60 Hz</p>
+                            <p class="hidden sm:block text-[10px] text-slate-400 font-medium">Sub-Bass</p>
+                        </div>
+                    </div>
+
+                    <!-- 230Hz -->
+                    <div class="flex flex-col items-center justify-between h-full bg-slate-50 dark:bg-slate-950/40 rounded-2xl p-2 sm:p-4 border border-slate-100 dark:border-slate-900/60">
+                        <span class="text-xs font-extrabold text-slate-800 dark:text-slate-100 bg-slate-200/50 dark:bg-slate-800 px-2 py-0.5 rounded" id="label-val-1">0dB</span>
+                        <div class="vertical-slider-container relative w-8 h-48 sm:h-64 flex items-center justify-center">
+                            <input type="range" min="-12" max="12" step="1" value="0" id="slider-1" class="w-48 sm:w-64" oninput="updateBand(1, this.value)" ondblclick="resetBand(1)">
+                        </div>
+                        <div class="text-center space-y-0.5">
+                            <p class="text-xs font-extrabold text-brand-600 dark:text-brand-400">230 Hz</p>
+                            <p class="hidden sm:block text-[10px] text-slate-400 font-medium">Low-Mid</p>
+                        </div>
+                    </div>
+
+                    <!-- 910Hz -->
+                    <div class="flex flex-col items-center justify-between h-full bg-slate-50 dark:bg-slate-950/40 rounded-2xl p-2 sm:p-4 border border-slate-100 dark:border-slate-900/60">
+                        <span class="text-xs font-extrabold text-slate-800 dark:text-slate-100 bg-slate-200/50 dark:bg-slate-800 px-2 py-0.5 rounded" id="label-val-2">0dB</span>
+                        <div class="vertical-slider-container relative w-8 h-48 sm:h-64 flex items-center justify-center">
+                            <input type="range" min="-12" max="12" step="1" value="0" id="slider-2" class="w-48 sm:w-64" oninput="updateBand(2, this.value)" ondblclick="resetBand(2)">
+                        </div>
+                        <div class="text-center space-y-0.5">
+                            <p class="text-xs font-extrabold text-brand-600 dark:text-brand-400">910 Hz</p>
+                            <p class="hidden sm:block text-[10px] text-slate-400 font-medium">Midrange</p>
+                        </div>
+                    </div>
+
+                    <!-- 4kHz -->
+                    <div class="flex flex-col items-center justify-between h-full bg-slate-50 dark:bg-slate-950/40 rounded-2xl p-2 sm:p-4 border border-slate-100 dark:border-slate-900/60">
+                        <span class="text-xs font-extrabold text-slate-800 dark:text-slate-100 bg-slate-200/50 dark:bg-slate-800 px-2 py-0.5 rounded" id="label-val-3">0dB</span>
+                        <div class="vertical-slider-container relative w-8 h-48 sm:h-64 flex items-center justify-center">
+                            <input type="range" min="-12" max="12" step="1" value="0" id="slider-3" class="w-48 sm:w-64" oninput="updateBand(3, this.value)" ondblclick="resetBand(3)">
+                        </div>
+                        <div class="text-center space-y-0.5">
+                            <p class="text-xs font-extrabold text-brand-600 dark:text-brand-400">4 kHz</p>
+                            <p class="hidden sm:block text-[10px] text-slate-400 font-medium">Upper-Mid</p>
+                        </div>
+                    </div>
+
+                    <!-- 14kHz -->
+                    <div class="flex flex-col items-center justify-between h-full bg-slate-50 dark:bg-slate-950/40 rounded-2xl p-2 sm:p-4 border border-slate-100 dark:border-slate-900/60">
+                        <span class="text-xs font-extrabold text-slate-800 dark:text-slate-100 bg-slate-200/50 dark:bg-slate-800 px-2 py-0.5 rounded" id="label-val-4">0dB</span>
+                        <div class="vertical-slider-container relative w-8 h-48 sm:h-64 flex items-center justify-center">
+                            <input type="range" min="-12" max="12" step="1" value="0" id="slider-4" class="w-48 sm:w-64" oninput="updateBand(4, this.value)" ondblclick="resetBand(4)">
+                        </div>
+                        <div class="text-center space-y-0.5">
+                            <p class="text-xs font-extrabold text-brand-600 dark:text-brand-400">14 kHz</p>
+                            <p class="hidden sm:block text-[10px] text-slate-400 font-medium">Presence</p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Hardware Engine Card (ANC, Bass Boost, Tactiles) -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 rounded-3xl p-6 shadow-sm">
+                <div class="mb-6">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest">Hammer Pro Hardware Controls</h3>
+                    <p class="text-xs text-slate-500">Control direct hardware audio chip parameters and wireless earbud properties</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    
+                    <!-- Left Side: Tactile Stepper Adjustments -->
+                    <div class="space-y-6">
+                        <h4 class="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                            <i data-lucide="zap" class="w-4 h-4 text-brand-500"></i> Tactile Sound Offsets
+                        </h4>
+
+                        <!-- Master Volume Row -->
                         <div class="space-y-2">
-                            <h3 class="text-xl font-bold text-white flex items-center gap-2">
-                                Download the APK
-                                <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Secure Link</span>
-                            </h3>
-                            <p class="text-slate-400 leading-relaxed">
-                                Click any of the <strong class="text-white">Download APK</strong> buttons on this page from your Android device. This will download the compiled binary installer package (<code class="text-brand-300">hammer-eq.apk</code>) directly to your device.
-                            </p>
-                            <div class="pt-2">
-                                <a href="./hammer-eq.apk" download class="inline-flex items-center gap-2 text-sm font-semibold text-brand-400 hover:text-brand-300 transition-colors">
-                                    <i data-lucide="download" class="w-4 h-4"></i> Download hammer-eq.apk (22 MB)
-                                </a>
+                            <div class="flex items-center justify-between text-xs font-bold">
+                                <span class="text-slate-500 dark:text-slate-400">Earbud Master Volume</span>
+                                <span class="text-brand-600 dark:text-brand-400" id="volume-val">80%</span>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <button onclick="adjustVolume(-5)" class="p-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors text-slate-700 dark:text-slate-300">
+                                    <i data-lucide="minus" class="w-4 h-4"></i>
+                                </button>
+                                <div class="flex-1 bg-slate-100 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden">
+                                    <div class="bg-brand-600 h-full rounded-full transition-all" style="width: 80%" id="bar-volume"></div>
+                                </div>
+                                <button onclick="adjustVolume(5)" class="p-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors text-slate-700 dark:text-slate-300">
+                                    <i data-lucide="plus" class="w-4 h-4"></i>
+                                </button>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Step 2 -->
-                    <div class="relative flex flex-col sm:flex-row gap-6 sm:gap-12">
-                        <div class="flex items-center justify-center w-16 h-16 rounded-2xl bg-slate-900 border border-slate-800 text-slate-400 font-extrabold text-xl shrink-0 z-10 bg-slate-950">
-                            2
-                        </div>
+                        <!-- Coaxial Bass Response -->
                         <div class="space-y-2">
-                            <h3 class="text-xl font-bold text-white">Enable Unknown Sources (if prompted)</h3>
-                            <p class="text-slate-400 leading-relaxed">
-                                When opening the file for the first time, Android may ask for permission to install packages from your browser or file manager. Tap <strong class="text-white">Settings</strong> on the prompt and toggle on <strong class="text-white">"Allow from this source"</strong>.
-                            </p>
+                            <div class="flex items-center justify-between text-xs font-bold">
+                                <span class="text-slate-500 dark:text-slate-400">Coaxial Bass Core Response</span>
+                                <span class="text-brand-600 dark:text-brand-400" id="bass-offset-val">0 dB</span>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <button onclick="adjustBassOffset(-1)" class="p-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors text-slate-700 dark:text-slate-300">
+                                    <i data-lucide="minus" class="w-4 h-4"></i>
+                                </button>
+                                <div class="flex-1 bg-slate-100 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden relative">
+                                    <!-- Centered visualizer bar -->
+                                    <div class="bg-brand-500 h-full rounded-full transition-all absolute left-1/2 -translate-x-1/2" style="width: 50%" id="bar-bass-offset"></div>
+                                </div>
+                                <button onclick="adjustBassOffset(1)" class="p-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors text-slate-700 dark:text-slate-300">
+                                    <i data-lucide="plus" class="w-4 h-4"></i>
+                                </button>
+                            </div>
                         </div>
-                    </div>
 
-                    <!-- Step 3 -->
-                    <div class="relative flex flex-col sm:flex-row gap-6 sm:gap-12">
-                        <div class="flex items-center justify-center w-16 h-16 rounded-2xl bg-slate-900 border border-slate-800 text-slate-400 font-extrabold text-xl shrink-0 z-10 bg-slate-950">
-                            3
-                        </div>
+                        <!-- Treble Sparkle -->
                         <div class="space-y-2">
-                            <h3 class="text-xl font-bold text-white">Complete Installation</h3>
-                            <p class="text-slate-400 leading-relaxed">
-                                Return to the installation screen or open the APK from your downloads, and tap <strong class="text-white">Install</strong>. Once completed, find the Hammer EQ app icon on your home screen or app drawer and launch it!
-                            </p>
+                            <div class="flex items-center justify-between text-xs font-bold">
+                                <span class="text-slate-500 dark:text-slate-400">High-Freq Treble Sparkle</span>
+                                <span class="text-brand-600 dark:text-brand-400" id="treble-offset-val">0 dB</span>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <button onclick="adjustTrebleOffset(-1)" class="p-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors text-slate-700 dark:text-slate-300">
+                                    <i data-lucide="minus" class="w-4 h-4"></i>
+                                </button>
+                                <div class="flex-1 bg-slate-100 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden relative">
+                                    <div class="bg-brand-500 h-full rounded-full transition-all absolute left-1/2 -translate-x-1/2" style="width: 50%" id="bar-treble-offset"></div>
+                                </div>
+                                <button onclick="adjustTrebleOffset(1)" class="p-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors text-slate-700 dark:text-slate-300">
+                                    <i data-lucide="plus" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Hammer Bass Boost Slider -->
+                        <div class="space-y-2 pt-2">
+                            <div class="flex items-center justify-between text-xs font-bold">
+                                <span class="text-slate-500 dark:text-slate-400">Dynamic Hammer Bass Boost+</span>
+                                <span class="text-brand-600 dark:text-brand-400" id="bass-boost-val">30%</span>
+                            </div>
+                            <input type="range" min="0" max="100" step="5" value="30" class="w-full" oninput="updateBassBoost(this.value)">
+                        </div>
+                    </div>
+
+                    <!-- Right Side: Hardware ANC Toggle & Gaming Modes -->
+                    <div class="space-y-6">
+                        <h4 class="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                            <i data-lucide="headphones" class="w-4 h-4 text-brand-500"></i> Hardware Transmission Engine
+                        </h4>
+
+                        <!-- ANC Control mode buttons -->
+                        <div class="space-y-2.5">
+                            <label class="text-xs font-bold text-slate-500 dark:text-slate-400">Active Noise Cancellation (ANC)</label>
+                            <div class="grid grid-cols-3 gap-2 p-1 bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800/80 rounded-2xl">
+                                <button onclick="setAncMode(0)" id="anc-btn-0" class="py-2.5 rounded-xl text-xs font-bold transition-all text-slate-700 dark:text-slate-300 hover:text-slate-900 bg-white dark:bg-slate-900 shadow-sm">
+                                    Normal
+                                </button>
+                                <button onclick="setAncMode(1)" id="anc-btn-1" class="py-2.5 rounded-xl text-xs font-bold transition-all text-slate-500 dark:text-slate-400 hover:text-slate-900">
+                                    Ambient
+                                </button>
+                                <button onclick="setAncMode(2)" id="anc-btn-2" class="py-2.5 rounded-xl text-xs font-bold transition-all text-slate-500 dark:text-slate-400 hover:text-slate-900">
+                                    ANC Active
+                                </button>
+                            </div>
+                        </div>
+
+                        <hr class="border-slate-100 dark:border-slate-800" />
+
+                        <!-- Low Latency Gaming Mode -->
+                        <div class="flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/50 border border-slate-100 dark:border-slate-800/60">
+                            <div class="space-y-1">
+                                <h5 class="text-xs font-extrabold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                                    <i data-lucide="zap" class="w-4 h-4 text-amber-500"></i> Low-Latency Gaming Mode
+                                </h5>
+                                <p class="text-[11px] text-slate-500">Drops wireless latency down to a synced 40ms to keep sound cues perfectly aligned with on-screen action.</p>
+                            </div>
+                            <!-- Switch -->
+                            <button onclick="toggleGamingMode()" id="gaming-mode-switch" class="w-12 h-6 rounded-full bg-slate-300 dark:bg-slate-800 p-0.5 transition-colors duration-250 focus:outline-none relative">
+                                <span id="gaming-switch-knob" class="block w-5 h-5 rounded-full bg-white shadow-md transform translate-x-0 transition-transform duration-250"></span>
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+        <!-- USER GUIDE TAB CONTENT -->
+        <div id="tab-guide-content" class="hidden space-y-6 max-w-4xl mx-auto">
+            
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 rounded-3xl p-6 sm:p-10 shadow-sm space-y-8">
+                
+                <div class="space-y-3">
+                    <h2 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">Hammer EQ User Manual</h2>
+                    <p class="text-sm text-slate-500 leading-relaxed">
+                        Welcome to the official companion manual for the Hammer sound tuning suite. Hammer EQ enables audiophiles and sound producers to write directly to their device's DSP audio registers to achieve high-fidelity acoustic performance.
+                    </p>
+                </div>
+
+                <hr class="border-slate-100 dark:border-slate-800" />
+
+                <!-- 5-Band Equalizer Principles -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-bold text-brand-600 dark:text-brand-400 flex items-center gap-2">
+                        <i data-lucide="sliders" class="w-5 h-5"></i> 1. The Five-Band EQ Framework
+                    </h3>
+                    <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                        The Hammer hardware console divides the audible spectrum into five distinct core frequency channels, each representing a crucial dynamic range:
+                    </p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 text-xs">
+                        <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/40 border border-slate-100 dark:border-slate-800/60">
+                            <strong class="text-slate-800 dark:text-slate-200 block mb-1">60Hz • Sub-Bass</strong>
+                            <p class="text-slate-500 leading-relaxed">Controls the deep weight and physical rumble of kick drums, bass synths, and heavy sub-acoustic waves. Boosting this creates a visceral bass feeling without cluttering mid frequencies.</p>
+                        </div>
+                        <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/40 border border-slate-100 dark:border-slate-800/60">
+                            <strong class="text-slate-800 dark:text-slate-200 block mb-1">230Hz • Low-Mid Frequency</strong>
+                            <p class="text-slate-500 leading-relaxed">Defines the warmth, fullness, and body of guitars, cello, low piano strings, and male vocals. Too much of this band creates muddy, echoing soundscapes.</p>
+                        </div>
+                        <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/40 border border-slate-100 dark:border-slate-800/60">
+                            <strong class="text-slate-800 dark:text-slate-200 block mb-1">910Hz • Midrange Clarity</strong>
+                            <p class="text-slate-500 leading-relaxed">The vocal frequency zone. Houses the fundamental frequencies of spoken words, lyricists, and lead acoustic lines. Boosting this elevates vocal legibility over backtracks.</p>
+                        </div>
+                        <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/40 border border-slate-100 dark:border-slate-800/60">
+                            <strong class="text-slate-800 dark:text-slate-200 block mb-1">4kHz • Upper-Mid & Presence</strong>
+                            <p class="text-slate-500 leading-relaxed">Controls attack transient sounds like cymbal hits, guitar plucks, and high harmonics. Essential for bringing instruments closer or pushing them further back into the soundstage.</p>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-    </section>
 
-    <!-- Features Section -->
-    <section id="features" class="py-20 bg-slate-900/30 border-t border-slate-900">
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center space-y-4 mb-16">
-                <h2 class="text-3xl font-black tracking-tight text-white sm:text-4xl">Studio Grade Features</h2>
-                <p class="text-slate-400 max-w-xl mx-auto">
-                    Built specifically to enhance the audio reproduction curves of your Hammer ear hardware.
-                </p>
-            </div>
+                <hr class="border-slate-100 dark:border-slate-800" />
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <!-- Feature 1 -->
-                <div class="p-6 rounded-3xl border border-slate-800/80 bg-slate-900/20 hover:border-brand-500/30 transition-all group">
-                    <div class="w-12 h-12 rounded-2xl bg-brand-600/10 border border-brand-500/20 text-brand-500 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                        <i data-lucide="sliders" class="w-6 h-6"></i>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-2">5-Band Digital Equalizer</h3>
-                    <p class="text-slate-400 text-sm leading-relaxed">
-                        Fine-tune specific frequency ranges from 60Hz up to 14kHz to balance details, vocals, and instruments perfectly.
+                <!-- Noise cancellation explained -->
+                <div class="space-y-3 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                    <h3 class="text-lg font-bold text-brand-600 dark:text-brand-400 flex items-center gap-2">
+                        <i data-lucide="headphones" class="w-5 h-5"></i> 2. Active Noise Control Modes
+                    </h3>
+                    <p>
+                        Hammer active wireless devices support dedicated physical hardware acoustic filtering, toggleable via the ANC Mode selectors:
+                    </p>
+                    <ul class="list-disc pl-5 space-y-2 pt-1 text-slate-500">
+                        <li><strong>Normal Mode:</strong> Disables both passive transparency and active feedback, allowing the earbuds to rely purely on passive silicone seal and run at standard low-power footprints.</li>
+                        <li><strong>Ambient Transparency Mode:</strong> Passes external frequency waves safely through the dual array microphone into the sound stream, enabling environmental awareness while running.</li>
+                        <li><strong>Active Noise Cancellation (ANC):</strong> Leverages dual array feed-forward and feed-back digital microphones to generate anti-noise waves, isolating the listener from background environment rumble.</li>
+                    </ul>
+                </div>
+
+                <hr class="border-slate-100 dark:border-slate-800" />
+
+                <!-- Hardware Sync Explained -->
+                <div class="space-y-3 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                    <h3 class="text-lg font-bold text-brand-600 dark:text-brand-400 flex items-center gap-2">
+                        <i data-lucide="zap" class="w-5 h-5"></i> 3. Dynamic Hardware Handshake
+                    </h3>
+                    <p>
+                        Unlike standard software visualizers, Hammer EQ syncs with the device's internal state. Saving or tweaking sliders forces a real-time serial Bluetooth data command, adjusting the hardware parameters of the coaxial drivers directly.
+                    </p>
+                    <p class="text-slate-500">
+                        For any technical support, ensure your device is running the latest firmware v1.0.4.
                     </p>
                 </div>
 
-                <!-- Feature 2 -->
-                <div class="p-6 rounded-3xl border border-slate-800/80 bg-slate-900/20 hover:border-brand-500/30 transition-all group">
-                    <div class="w-12 h-12 rounded-2xl bg-brand-600/10 border border-brand-500/20 text-brand-500 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                        <i data-lucide="save" class="w-6 h-6"></i>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-2">Infinite Custom Presets</h3>
-                    <p class="text-slate-400 text-sm leading-relaxed">
-                        Create, name, and store custom preset profiles to instantly load specific settings for different music genres or audio modes.
-                    </p>
-                </div>
+            </div>
 
-                <!-- Feature 3 -->
-                <div class="p-6 rounded-3xl border border-slate-800/80 bg-slate-900/20 hover:border-brand-500/30 transition-all group">
-                    <div class="w-12 h-12 rounded-2xl bg-brand-600/10 border border-brand-500/20 text-brand-500 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                        <i data-lucide="zap" class="w-6 h-6"></i>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-2">Advanced Device Profiles</h3>
-                    <p class="text-slate-400 text-sm leading-relaxed">
-                        Seamlessly optimize settings depending on whether you are using active noise cancellation, transparency mode, or standard listening.
-                    </p>
-                </div>
+        </div>
+
+    </main>
+
+    <!-- Hidden HTML5 Audio tag for MP3 playback -->
+    <audio id="audio-element" loop class="hidden"></audio>
+
+    <!-- Save Preset Modal Dialog -->
+    <div id="save-preset-dialog" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 max-w-md w-full rounded-3xl p-6 shadow-2xl space-y-4">
+            <h4 class="text-base font-black text-slate-900 dark:text-white">Save Custom Sound Profile</h4>
+            <p class="text-xs text-slate-500">Provide a descriptive name to store your active 5-band slider values locally.</p>
+            <input type="text" id="preset-name-input" placeholder="e.g. My Studio Bass" class="w-full px-4 py-3 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 text-xs font-bold focus:outline-none focus:border-brand-500">
+            <div class="flex justify-end gap-2.5 pt-2">
+                <button onclick="closeSavePresetDialog()" class="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-bold rounded-xl transition-all">
+                    Cancel
+                </button>
+                <button onclick="saveActivePreset()" class="px-5 py-2 bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-brand-600/10">
+                    Save Preset
+                </button>
             </div>
         </div>
-    </section>
+    </div>
 
-    <!-- Compatibility Section -->
-    <section id="compatibility" class="py-20 border-t border-slate-900">
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8">
-            <h2 class="text-3xl font-black tracking-tight text-white">Device Support</h2>
-            <p class="text-slate-400 leading-relaxed max-w-xl mx-auto">
-                Hammer EQ supports all smartphones and tablets running <strong class="text-white">Android 10 (API level 29) to Android 16</strong>. Built as a native Kotlin app, it runs directly with minimal battery and system memory footprints.
-            </p>
-            <div class="flex flex-wrap justify-center gap-3">
-                <span class="px-4 py-2 rounded-full border border-slate-800 bg-slate-900/40 text-slate-300 text-sm font-semibold">Android 10</span>
-                <span class="px-4 py-2 rounded-full border border-slate-800 bg-slate-900/40 text-slate-300 text-sm font-semibold">Android 11</span>
-                <span class="px-4 py-2 rounded-full border border-slate-800 bg-slate-900/40 text-slate-300 text-sm font-semibold">Android 12</span>
-                <span class="px-4 py-2 rounded-full border border-slate-800 bg-slate-900/40 text-slate-300 text-sm font-semibold">Android 13</span>
-                <span class="px-4 py-2 rounded-full border border-slate-800 bg-slate-900/40 text-slate-300 text-sm font-semibold">Android 14</span>
-                <span class="px-4 py-2 rounded-full border border-slate-800 bg-slate-900/40 text-slate-300 text-sm font-semibold">Android 15</span>
-                <span class="px-4 py-2 rounded-full border border-slate-800 bg-slate-900/40 text-slate-300 text-sm font-semibold">Android 16</span>
-            </div>
-        </div>
-    </section>
-
-    <!-- Footer -->
-    <footer class="border-t border-slate-900 bg-slate-950 py-12">
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
-            <div class="flex items-center gap-2.5">
-                <div class="p-1.5 bg-brand-600/10 border border-brand-500/20 rounded-lg text-brand-500">
-                    <i data-lucide="sliders" class="w-4 h-4"></i>
-                </div>
-                <span class="text-lg font-black tracking-tight text-white">Hammer <span class="text-brand-500">EQ</span></span>
-            </div>
-            <p class="text-xs text-slate-500">
-                &copy; 2026 Hammer EQ. Crafted with care for Android smartphones and tablets.
-            </p>
-        </div>
+    <!-- Small footer -->
+    <footer class="border-t border-slate-200 dark:border-slate-900 py-8 text-center text-slate-400 text-xs">
+        <p>&copy; 2026 Hammer Audio. Designed to bring pristine DSP tuning to your hardware devices.</p>
     </footer>
 
-    <!-- Initialize Lucide Icons -->
+    <!-- Web Audio & App State Logic -->
     <script>
-        lucide.createIcons();
+        // Default Predefined Presets
+        const DEFAULT_PRESETS = [
+            { id: 'flat', name: 'Flat Line', bands: [0, 0, 0, 0, 0] },
+            { id: 'classic-bass', name: 'Classic Bass', bands: [6, 4, 1, -2, -1] },
+            { id: 'acoustic', name: 'Acoustic Curve', bands: [-1, 2, 3, 1, 4] },
+            { id: 'vocal-boost', name: 'Vocal Boost', bands: [-4, -1, 5, 4, 1] },
+            { id: 'podcast', name: 'Podcast Speech', bands: [-3, 2, 5, 2, -2] }
+        ];
+
+        // Active State
+        let state = {
+            selectedModel: 'Hammer Pro',
+            connectionState: 'connected', // connected, connecting, disconnected
+            battery: { left: 85, right: 85, case: 100 },
+            bands: [0, 0, 0, 0, 0], // corresponding to 60Hz, 230Hz, 910Hz, 4kHz, 14kHz
+            bassBoost: 30,
+            masterVolume: 80,
+            coaxialBass: 0,
+            trebleSparkle: 0,
+            ancMode: 0, // 0: Normal, 1: Ambient, 2: ANC Active
+            gamingMode: false,
+            selectedTab: 'eq',
+            isDarkTheme: true,
+            selectedPresetId: 'flat'
+        };
+
+        // Web Audio API Global Context Variables
+        let audioCtx = null;
+        let filters = []; // 5 BiquadFilterNodes
+        let masterGain = null;
+        let synthInterval = null;
+        let isPlayingSynth = false;
+        let isAudioUploaded = false;
+        let audioSourceNode = null;
+        let analyserNode = null;
+
+        // On document load
+        window.addEventListener('load', () => {
+            // Initial theme toggle support
+            if (localStorage.getItem('theme') === 'light') {
+                document.documentElement.classList.remove('dark');
+                state.isDarkTheme = false;
+                updateThemeIcons();
+            } else {
+                document.documentElement.classList.add('dark');
+                state.isDarkTheme = true;
+                updateThemeIcons();
+            }
+
+            // Load saved presets from localStorage
+            loadCustomPresets();
+
+            // Initialize UI elements matching default state
+            applyStateToUI();
+
+            // Initialize canvas drawing
+            initCanvas();
+            drawEQCurve();
+            
+            // Initialize Lucide Icons
+            lucide.createIcons();
+        });
+
+        // Toggle connection state
+        function toggleConnection() {
+            const pill = document.getElementById('connection-pill');
+            const ind = document.getElementById('connection-indicator');
+            const txt = document.getElementById('connection-text');
+            const batStats = document.getElementById('battery-stats');
+            const discVisual = document.getElementById('disconnected-visual');
+
+            if (state.connectionState === 'connected') {
+                // Change to disconnected
+                state.connectionState = 'disconnected';
+                pill.className = 'inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400 text-xs font-bold transition-all';
+                ind.className = 'w-2 h-2 rounded-full bg-rose-500';
+                txt.innerText = 'Disconnected';
+                batStats.classList.add('hidden');
+                discVisual.classList.remove('hidden');
+            } else {
+                // Change to connecting, then connected
+                state.connectionState = 'connecting';
+                pill.className = 'inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-bold transition-all';
+                ind.className = 'w-2 h-2 rounded-full bg-amber-500 animate-spin';
+                txt.innerText = 'Connecting...';
+                
+                setTimeout(() => {
+                    if (state.connectionState !== 'connecting') return;
+                    state.connectionState = 'connected';
+                    pill.className = 'inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold transition-all';
+                    ind.className = 'w-2 h-2 rounded-full bg-emerald-500 animate-pulse';
+                    txt.innerText = 'Connected';
+                    batStats.classList.remove('hidden');
+                    discVisual.classList.add('hidden');
+
+                    // Randomize battery stats a tiny bit to look highly dynamic and realistic
+                    state.battery.left = Math.max(10, Math.floor(80 + Math.random() * 20));
+                    state.battery.right = Math.max(10, Math.floor(80 + Math.random() * 20));
+                    state.battery.case = Math.max(20, Math.floor(70 + Math.random() * 30));
+                    applyBatteryStats();
+                }, 1200);
+            }
+        }
+
+        function applyBatteryStats() {
+            document.getElementById('battery-left').innerText = state.battery.left + '%';
+            document.getElementById('battery-right').innerText = state.battery.right + '%';
+            document.getElementById('battery-case').innerText = state.battery.case + '%';
+
+            document.getElementById('bar-battery-left').style.width = state.battery.left + '%';
+            document.getElementById('bar-battery-right').style.width = state.battery.right + '%';
+            document.getElementById('bar-battery-case').style.width = state.battery.case + '%';
+        }
+
+        // Dropdown toggle
+        function toggleModelDropdown() {
+            const dropdown = document.getElementById('model-dropdown');
+            dropdown.classList.toggle('hidden');
+        }
+
+        // Select earbud model
+        function selectModel(modelName) {
+            state.selectedModel = modelName;
+            document.getElementById('active-model').innerText = modelName;
+            document.getElementById('model-dropdown').classList.add('hidden');
+            
+            // Simulating connecting briefly for realism
+            const pill = document.getElementById('connection-pill');
+            const ind = document.getElementById('connection-indicator');
+            const txt = document.getElementById('connection-text');
+            
+            pill.className = 'inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-bold transition-all';
+            ind.className = 'w-2 h-2 rounded-full bg-amber-500 animate-spin';
+            txt.innerText = 'Syncing ' + modelName;
+
+            setTimeout(() => {
+                pill.className = 'inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold transition-all';
+                ind.className = 'w-2 h-2 rounded-full bg-emerald-500 animate-pulse';
+                txt.innerText = 'Connected';
+            }, 800);
+        }
+
+        // Initialize Web Audio Engine
+        function initAudio() {
+            if (audioCtx) return;
+            
+            // Standard AudioContext initialization
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            
+            // Define frequencies
+            const freqs = [60, 230, 910, 4000, 14000];
+            
+            // Create 5 peaking biquad filters
+            filters = freqs.map((freq) => {
+                const filter = audioCtx.createBiquadFilter();
+                filter.type = 'peaking';
+                filter.frequency.value = freq;
+                filter.Q.value = 1.0; // moderate Q
+                filter.gain.value = 0; // default
+                return filter;
+            });
+
+            // Create analyzer node
+            analyserNode = audioCtx.createAnalyser();
+            analyserNode.fftSize = 64;
+
+            // Create Master Gain node for volume control
+            masterGain = audioCtx.createGain();
+            // Volume ranges from 0 to 1
+            masterGain.gain.value = state.masterVolume / 100;
+
+            // Connect filters in chain
+            // source -> filter0 -> filter1 -> filter2 -> filter3 -> filter4 -> analyserNode -> masterGain -> destination
+            filters[0].connect(filters[1]);
+            filters[1].connect(filters[2]);
+            filters[2].connect(filters[3]);
+            filters[3].connect(filters[4]);
+            filters[4].connect(analyserNode);
+            analyserNode.connect(masterGain);
+            masterGain.connect(audioCtx.destination);
+
+            // Apply current slider gains to filters
+            applySlidersToWebAudio();
+
+            // Set up HTML5 Audio source
+            const audioEl = document.getElementById('audio-element');
+            audioSourceNode = audioCtx.createMediaElementSource(audioEl);
+            audioSourceNode.connect(filters[0]);
+
+            // Start visualizer looping
+            loopVisualizer();
+        }
+
+        // Applies UI slider state to Web Audio Filters
+        function applySlidersToWebAudio() {
+            if (!audioCtx) return;
+            for (let i = 0; i < 5; i++) {
+                // Smooth transition in 0.05 seconds
+                filters[i].gain.setTargetAtTime(state.bands[i], audioCtx.currentTime, 0.05);
+            }
+        }
+
+        // Real-time audio spectrum analyzer visualizer
+        function loopVisualizer() {
+            requestAnimationFrame(loopVisualizer);
+            const canvas = document.getElementById('visualizer-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+            
+            ctx.clearRect(0, 0, width, height);
+
+            if (!analyserNode || (!isPlayingSynth && document.getElementById('audio-element').paused)) {
+                return;
+            }
+
+            const bufferLength = analyserNode.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            analyserNode.getByteFrequencyData(dataArray);
+
+            const barWidth = (width / bufferLength) * 1.5;
+            let barHeight;
+            let x = 0;
+
+            for (let i = 0; i < bufferLength; i++) {
+                barHeight = (dataArray[i] / 255) * height * 0.9;
+
+                // Color gradients matching theme
+                const r = 124 + (i * 2);
+                const g = 58;
+                const b = 237 - (i * 2);
+
+                ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.25)`;
+                ctx.fillRect(x, height - barHeight, barWidth - 1, barHeight);
+
+                x += barWidth;
+            }
+        }
+
+        // Custom synthesizer scheduler to generate zero-dependency melodic soundscape
+        const CHORDS = [
+            [130.81, 164.81, 196.00, 246.94], // Cmaj7
+            [174.61, 220.00, 261.63, 329.63], // Fmaj7
+            [146.83, 174.61, 220.00, 261.63], // Dm7
+            [196.00, 246.94, 293.66, 349.23]  // G7
+        ];
+        let chordIndex = 0;
+
+        function playSynthChord() {
+            if (!isPlayingSynth || !audioCtx) return;
+
+            const now = audioCtx.currentTime;
+            const chord = CHORDS[chordIndex];
+            chordIndex = (chordIndex + 1) % CHORDS.length;
+
+            // Generate slow-attack warm pad sound for each frequency
+            chord.forEach((freq) => {
+                const osc = audioCtx.createOscillator();
+                const filter = audioCtx.createBiquadFilter();
+                const gain = audioCtx.createGain();
+
+                // Lowpass filter on synth notes for smooth warmth
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(800, now);
+
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(freq, now);
+
+                // Attack and long release envelope
+                gain.gain.setValueAtTime(0, now);
+                gain.gain.linearRampToValueAtTime(0.06, now + 0.3); // Soft attack
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 2.3); // Smooth decay
+
+                osc.connect(filter);
+                filter.connect(gain);
+                // Connect directly to the start of equalizer chain!
+                gain.connect(filters[0]);
+
+                osc.start(now);
+                osc.stop(now + 2.4);
+            });
+
+            // Random delicate high chime note
+            if (Math.random() > 0.3) {
+                const chimes = [523.25, 587.33, 659.25, 783.99, 880.00];
+                const note = chimes[Math.floor(Math.random() * chimes.length)];
+                
+                const chimeOsc = audioCtx.createOscillator();
+                const chimeGain = audioCtx.createGain();
+
+                chimeOsc.type = 'sine';
+                chimeOsc.frequency.setValueAtTime(note, now + 0.5);
+
+                chimeGain.gain.setValueAtTime(0, now + 0.5);
+                chimeGain.gain.linearRampToValueAtTime(0.03, now + 0.7);
+                chimeGain.gain.exponentialRampToValueAtTime(0.0001, now + 2.1);
+
+                chimeOsc.connect(chimeGain);
+                chimeGain.connect(filters[0]);
+
+                chimeOsc.start(now + 0.5);
+                chimeOsc.stop(now + 2.2);
+            }
+        }
+
+        // Toggle Synth sounds
+        function toggleSynthLoop() {
+            // Check resume context
+            if (!audioCtx) {
+                initAudio();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            const btn = document.getElementById('btn-synth');
+            const playIcon = document.getElementById('synth-play-icon');
+            const text = document.getElementById('synth-text');
+            const audioEl = document.getElementById('audio-element');
+
+            if (isPlayingSynth) {
+                // Stop synth loop
+                isPlayingSynth = false;
+                clearInterval(synthInterval);
+                synthInterval = null;
+                btn.className = 'px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-xs font-bold shadow-md shadow-brand-600/20 flex items-center gap-1.5 transition-all';
+                playIcon.setAttribute('data-lucide', 'play');
+                text.innerText = 'Play Synth Loop';
+                lucide.createIcons();
+            } else {
+                // Stop local MP3 if playing
+                if (!audioEl.paused) {
+                    audioEl.pause();
+                }
+
+                // Start synth loop
+                isPlayingSynth = true;
+                playSynthChord(); // play immediately
+                synthInterval = setInterval(playSynthChord, 2200);
+
+                btn.className = 'px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-xs font-bold shadow-md shadow-amber-600/20 flex items-center gap-1.5 transition-all animate-pulse';
+                playIcon.setAttribute('data-lucide', 'square');
+                text.innerText = 'Stop Synth Loop';
+                lucide.createIcons();
+            }
+        }
+
+        // Handle uploaded MP3 or custom sound file
+        function handleAudioUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Resume audio context
+            if (!audioCtx) {
+                initAudio();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            // Stop Synth if playing
+            if (isPlayingSynth) {
+                toggleSynthLoop();
+            }
+
+            const fileURL = URL.createObjectURL(file);
+            const audioEl = document.getElementById('audio-element');
+            audioEl.src = fileURL;
+            audioEl.play()
+                .then(() => {
+                    isAudioUploaded = true;
+                    // Flash notification that music is playing
+                    alert('Successfully playing: ' + file.name + ' under pristine custom hardware equalization!');
+                })
+                .catch(err => {
+                    console.error('Audio playback failed: ', err);
+                });
+        }
+
+        // Dynamic Bezier Canvas drawing logic
+        let canvas = null;
+        let ctx = null;
+
+        function initCanvas() {
+            canvas = document.getElementById('curve-canvas');
+            ctx = canvas.getContext('2d');
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+        }
+
+        function resizeCanvas() {
+            const visCanvas = document.getElementById('visualizer-canvas');
+            if (canvas && visCanvas) {
+                const rect = canvas.parentElement.getBoundingClientRect();
+                canvas.width = rect.width;
+                canvas.height = rect.height;
+                visCanvas.width = rect.width;
+                visCanvas.height = rect.height;
+                drawEQCurve();
+            }
+        }
+
+        function drawEQCurve() {
+            if (!canvas || !ctx) return;
+            const w = canvas.width;
+            const h = canvas.height;
+            const midY = h / 2;
+
+            ctx.clearRect(0, 0, w, h);
+
+            // Construct exact coordinates of our 5 frequency control nodes
+            // Anchor 1 (Left 0dB) at x=0
+            // Slider 1 (60Hz) at x=15%
+            // Slider 2 (230Hz) at x=32.5%
+            // Slider 3 (910Hz) at x=50%
+            // Slider 4 (4kHz) at x=67.5%
+            // Slider 5 (14kHz) at x=85%
+            // Anchor 2 (Right 0dB) at x=w
+            const points = [
+                { x: 0, y: midY },
+                { x: w * 0.15, y: midY - (state.bands[0] / 12) * (h / 2 * 0.8) },
+                { x: w * 0.325, y: midY - (state.bands[1] / 12) * (h / 2 * 0.8) },
+                { x: w * 0.50, y: midY - (state.bands[2] / 12) * (h / 2 * 0.8) },
+                { x: w * 0.675, y: midY - (state.bands[3] / 12) * (h / 2 * 0.8) },
+                { x: w * 0.85, y: midY - (state.bands[4] / 12) * (h / 2 * 0.8) },
+                { x: w, y: midY }
+            ];
+
+            // 1. Draw glowing background grid lines
+            ctx.strokeStyle = state.isDarkTheme ? 'rgba(51, 65, 85, 0.15)' : 'rgba(148, 163, 184, 0.2)';
+            ctx.lineWidth = 1;
+
+            // 2. Draw smooth Cardinal Spline / curve passing through control nodes
+            ctx.beginPath();
+            ctx.moveTo(points[0].x, points[0].y);
+
+            // Draw smooth curves connecting nodes with cubic-spline like formula
+            for (let i = 0; i < points.length - 1; i++) {
+                const xc = (points[i].x + points[i + 1].x) / 2;
+                const yc = (points[i].y + points[i + 1].y) / 2;
+                ctx.quadraticCurveTo(points[i].x, points[i].y, xc, yc);
+            }
+            ctx.lineTo(points[points.length - 1].x, points[points.length - 1].y);
+
+            // Style of the curve
+            const gradient = ctx.createLinearGradient(0, 0, w, 0);
+            gradient.addColorStop(0, '#a78bfa');
+            gradient.addColorStop(0.5, '#7c3aed');
+            gradient.addColorStop(1, '#6366f1');
+
+            ctx.strokeStyle = gradient;
+            ctx.lineWidth = 3.5;
+            ctx.shadowColor = 'rgba(124, 58, 237, 0.5)';
+            ctx.shadowBlur = 10;
+            ctx.stroke();
+            ctx.shadowBlur = 0; // reset
+
+            // 3. Draw indicator dots at the 5 key frequency nodes
+            for (let i = 1; i <= 5; i++) {
+                const pt = points[i];
+                ctx.beginPath();
+                ctx.arc(pt.x, pt.y, 6, 0, 2 * Math.PI);
+                ctx.fillStyle = '#ffffff';
+                ctx.strokeStyle = '#7c3aed';
+                ctx.lineWidth = 2.5;
+                ctx.fill();
+                ctx.stroke();
+            }
+        }
+
+        // Apply sliders state down to interface
+        function applyStateToUI() {
+            // Apply 5 bands
+            for (let i = 0; i < 5; i++) {
+                const val = state.bands[i];
+                document.getElementById('slider-' + i).value = val;
+                document.getElementById('label-val-' + i).innerText = (val > 0 ? '+' : '') + val + 'dB';
+            }
+
+            // Apply battery indicators
+            applyBatteryStats();
+
+            // Apply hardware properties
+            document.getElementById('volume-val').innerText = state.masterVolume + '%';
+            document.getElementById('bar-volume').style.width = state.masterVolume + '%';
+
+            document.getElementById('bass-offset-val').innerText = (state.coaxialBass > 0 ? '+' : '') + state.coaxialBass + ' dB';
+            // Scale offset bar -10 to +10
+            const bassWidth = ((state.coaxialBass + 10) / 20) * 100;
+            document.getElementById('bar-bass-offset').style.width = bassWidth + '%';
+
+            document.getElementById('treble-offset-val').innerText = (state.trebleSparkle > 0 ? '+' : '') + state.trebleSparkle + ' dB';
+            const trebleWidth = ((state.trebleSparkle + 10) / 20) * 100;
+            document.getElementById('bar-treble-offset').style.width = trebleWidth + '%';
+
+            document.getElementById('bass-boost-val').innerText = state.bassBoost + '%';
+
+            // Apply ANC
+            setAncMode(state.ancMode);
+
+            // Apply gaming mode
+            updateGamingModeUI();
+
+            // Render preset chips
+            renderPresetChips();
+        }
+
+        // Updates a single band value
+        function updateBand(index, value) {
+            state.bands[index] = parseInt(value);
+            document.getElementById('label-val-' + index).innerText = (value > 0 ? '+' : '') + value + 'dB';
+            
+            // Mark preset as custom unsaved
+            if (state.selectedPresetId !== 'custom') {
+                state.selectedPresetId = 'custom';
+                renderPresetChips();
+            }
+
+            applySlidersToWebAudio();
+            drawEQCurve();
+        }
+
+        // Resets single band to 0dB on double click
+        function resetBand(index) {
+            updateBand(index, 0);
+            document.getElementById('slider-' + index).value = 0;
+        }
+
+        // Reset sliders to complete flat profile
+        function resetSlidersToFlat() {
+            state.selectedPresetId = 'flat';
+            state.bands = [0, 0, 0, 0, 0];
+            applyStateToUI();
+            applySlidersToWebAudio();
+            drawEQCurve();
+        }
+
+        // Theme management
+        function toggleTheme() {
+            const doc = document.documentElement;
+            const icon = document.getElementById('theme-icon');
+
+            if (doc.classList.contains('dark')) {
+                doc.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+                state.isDarkTheme = false;
+            } else {
+                doc.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+                state.isDarkTheme = true;
+            }
+            updateThemeIcons();
+            drawEQCurve();
+        }
+
+        function updateThemeIcons() {
+            const icon = document.getElementById('theme-icon');
+            if (state.isDarkTheme) {
+                icon.setAttribute('data-lucide', 'sun');
+            } else {
+                icon.setAttribute('data-lucide', 'moon');
+            }
+            lucide.createIcons();
+        }
+
+        // Tab Switching
+        function switchTab(tab) {
+            state.selectedTab = tab;
+            
+            const btnEq = document.getElementById('btn-tab-eq');
+            const btnGuide = document.getElementById('btn-tab-guide');
+            const contentEq = document.getElementById('tab-eq-content');
+            const contentGuide = document.getElementById('tab-guide-content');
+
+            if (tab === 'eq') {
+                btnEq.className = 'px-4 py-2 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 bg-brand-600 text-white shadow-lg shadow-brand-600/10 dark:shadow-brand-600/20';
+                btnGuide.className = 'px-4 py-2 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white';
+                contentEq.classList.remove('hidden');
+                contentGuide.classList.add('hidden');
+                // Redraw canvas since it becomes visible
+                setTimeout(resizeCanvas, 50);
+            } else {
+                btnEq.className = 'px-4 py-2 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white';
+                btnGuide.className = 'px-4 py-2 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 bg-brand-600 text-white shadow-lg shadow-brand-600/10 dark:shadow-brand-600/20';
+                contentEq.classList.add('hidden');
+                contentGuide.classList.remove('hidden');
+            }
+        }
+
+        // Hardware Controls Adjustments
+        function adjustVolume(amount) {
+            state.masterVolume = Math.min(100, Math.max(0, state.masterVolume + amount));
+            document.getElementById('volume-val').innerText = state.masterVolume + '%';
+            document.getElementById('bar-volume').style.width = state.masterVolume + '%';
+            
+            // Apply down to Web Audio node
+            if (masterGain) {
+                masterGain.gain.setValueAtTime(state.masterVolume / 100, audioCtx.currentTime);
+            }
+        }
+
+        function adjustBassOffset(amount) {
+            state.coaxialBass = Math.min(10, Math.max(-10, state.coaxialBass + amount));
+            document.getElementById('bass-offset-val').innerText = (state.coaxialBass > 0 ? '+' : '') + state.coaxialBass + ' dB';
+            
+            const bassWidth = ((state.coaxialBass + 10) / 20) * 100;
+            document.getElementById('bar-bass-offset').style.width = bassWidth + '%';
+
+            // Boost the 60Hz and 230Hz filters slightly as offset
+            if (audioCtx) {
+                filters[0].gain.setTargetAtTime(state.bands[0] + (state.coaxialBass * 0.5), audioCtx.currentTime, 0.05);
+                filters[1].gain.setTargetAtTime(state.bands[1] + (state.coaxialBass * 0.3), audioCtx.currentTime, 0.05);
+            }
+        }
+
+        function adjustTrebleOffset(amount) {
+            state.trebleSparkle = Math.min(10, Math.max(-10, state.trebleSparkle + amount));
+            document.getElementById('treble-offset-val').innerText = (state.trebleSparkle > 0 ? '+' : '') + state.trebleSparkle + ' dB';
+            
+            const trebleWidth = ((state.trebleSparkle + 10) / 20) * 100;
+            document.getElementById('bar-treble-offset').style.width = trebleWidth + '%';
+
+            // Boost the 14kHz filters slightly as offset
+            if (audioCtx) {
+                filters[4].gain.setTargetAtTime(state.bands[4] + (state.trebleSparkle * 0.6), audioCtx.currentTime, 0.05);
+            }
+        }
+
+        function updateBassBoost(value) {
+            state.bassBoost = parseInt(value);
+            document.getElementById('bass-boost-val').innerText = state.bassBoost + '%';
+        }
+
+        function setAncMode(index) {
+            state.ancMode = index;
+            // Toggle classes on ANC buttons
+            for (let i = 0; i < 3; i++) {
+                const btn = document.getElementById('anc-btn-' + i);
+                if (i === index) {
+                    btn.className = 'py-2.5 rounded-xl text-xs font-bold transition-all bg-white dark:bg-slate-900 shadow-sm text-brand-600 dark:text-brand-400';
+                } else {
+                    btn.className = 'py-2.5 rounded-xl text-xs font-bold transition-all text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200';
+                }
+            }
+        }
+
+        function toggleGamingMode() {
+            state.gamingMode = !state.gamingMode;
+            updateGamingModeUI();
+        }
+
+        function updateGamingModeUI() {
+            const btn = document.getElementById('gaming-mode-switch');
+            const knob = document.getElementById('gaming-switch-knob');
+            
+            if (state.gamingMode) {
+                btn.classList.remove('bg-slate-300', 'dark:bg-slate-800');
+                btn.classList.add('bg-brand-600');
+                knob.style.transform = 'translateX(24px)';
+            } else {
+                btn.classList.add('bg-slate-300', 'dark:bg-slate-800');
+                btn.classList.remove('bg-brand-600');
+                knob.style.transform = 'translateX(0px)';
+            }
+        }
+
+        // Custom Preset Management & Local Storage Sync
+        let customPresetsList = [];
+
+        function loadCustomPresets() {
+            const saved = localStorage.getItem('hammer_eq_custom_presets');
+            if (saved) {
+                try {
+                    customPresetsList = JSON.parse(saved);
+                } catch (e) {
+                    customPresetsList = [];
+                }
+            } else {
+                customPresetsList = [];
+            }
+        }
+
+        function saveCustomPresetsToStorage() {
+            localStorage.setItem('hammer_eq_custom_presets', JSON.stringify(customPresetsList));
+        }
+
+        function renderPresetChips() {
+            const container = document.getElementById('presets-chips-container');
+            container.innerHTML = '';
+
+            // Render Default Presets
+            DEFAULT_PRESETS.forEach(preset => {
+                const isSelected = state.selectedPresetId === preset.id;
+                const btn = document.createElement('button');
+                btn.onclick = () => selectPreset(preset.id, preset.bands);
+                btn.className = getPresetChipClass(isSelected);
+                btn.innerHTML = `${preset.name}`;
+                container.appendChild(btn);
+            });
+
+            // Render custom user-created presets
+            customPresetsList.forEach(preset => {
+                const presetId = 'db_' + preset.id;
+                const isSelected = state.selectedPresetId === presetId;
+                
+                const wrapper = document.createElement('div');
+                wrapper.className = 'inline-flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border ' + 
+                    (isSelected ? 'border-brand-500 bg-brand-50/50 dark:bg-brand-950/20' : 'border-slate-200 dark:border-slate-800/80');
+
+                const btn = document.createElement('button');
+                btn.onclick = () => selectPreset(presetId, preset.bands);
+                btn.className = 'px-3 py-1 text-xs font-bold transition-all ' + (isSelected ? 'text-brand-600 dark:text-brand-400' : 'text-slate-700 dark:text-slate-300');
+                btn.innerHTML = `${preset.name}`;
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    deleteCustomPreset(preset.id);
+                };
+                deleteBtn.className = 'p-1 hover:text-rose-500 rounded-lg text-slate-400 transition-colors';
+                deleteBtn.innerHTML = `<i data-lucide="trash-2" class="w-3.5 h-3.5"></i>`;
+
+                wrapper.appendChild(btn);
+                wrapper.appendChild(deleteBtn);
+                container.appendChild(wrapper);
+            });
+
+            // If customized without saving, show custom chip indicator
+            if (state.selectedPresetId === 'custom') {
+                const customBtn = document.createElement('div');
+                customBtn.className = 'px-4 py-2 text-xs font-bold rounded-xl border border-dashed border-brand-500 bg-brand-50/20 text-brand-600 dark:text-brand-400 flex items-center gap-1.5';
+                customBtn.innerHTML = `<span>Unsaved Tuned Profile *</span>`;
+                container.appendChild(customBtn);
+            }
+
+            lucide.createIcons();
+        }
+
+        function getPresetChipClass(isSelected) {
+            if (isSelected) {
+                return 'px-4 py-2 text-xs font-bold rounded-xl border border-brand-500 bg-brand-100/60 dark:bg-brand-900/20 text-brand-600 dark:text-brand-400 transition-all';
+            } else {
+                return 'px-4 py-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:border-slate-400 dark:hover:border-slate-600 transition-all';
+            }
+        }
+
+        function selectPreset(presetId, bands) {
+            state.selectedPresetId = presetId;
+            state.bands = [...bands];
+            
+            // Re-apply states down
+            applyStateToUI();
+            applySlidersToWebAudio();
+            drawEQCurve();
+        }
+
+        // Open Dialog Modal
+        function openSavePresetDialog() {
+            document.getElementById('preset-name-input').value = '';
+            document.getElementById('save-preset-dialog').classList.remove('hidden');
+        }
+
+        function closeSavePresetDialog() {
+            document.getElementById('save-preset-dialog').classList.add('hidden');
+        }
+
+        // Save customized preset
+        function saveActivePreset() {
+            const nameInput = document.getElementById('preset-name-input').value.trim();
+            if (!nameInput) {
+                alert('Please enter a valid sound profile name.');
+                return;
+            }
+
+            const newPreset = {
+                id: 'p_' + Date.now(),
+                name: nameInput,
+                bands: [...state.bands]
+            };
+
+            customPresetsList.push(newPreset);
+            saveCustomPresetsToStorage();
+            closeSavePresetDialog();
+
+            // Auto-select the newly saved preset
+            state.selectedPresetId = 'db_' + newPreset.id;
+            applyStateToUI();
+            
+            alert('Sound profile "' + nameInput + '" has been saved to your local storage successfully!');
+        }
+
+        function deleteCustomPreset(presetId) {
+            customPresetsList = customPresetsList.filter(p => p.id !== presetId);
+            saveCustomPresetsToStorage();
+
+            if (state.selectedPresetId === 'db_' + presetId) {
+                state.selectedPresetId = 'flat';
+                state.bands = [0, 0, 0, 0, 0];
+                applySlidersToWebAudio();
+            }
+
+            applyStateToUI();
+            drawEQCurve();
+        }
     </script>
 </body>
 </html>
